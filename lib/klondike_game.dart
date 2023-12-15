@@ -1,7 +1,11 @@
+import 'dart:math';
+
+import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:syzygy/utils/sizes.dart';
 
+import 'components/card.dart';
 import 'components/foundation.dart';
 import 'components/pile.dart';
 import 'components/stock.dart';
@@ -19,14 +23,14 @@ class KlondikeGame extends FlameGame {
       ..position = Vector2(cardWidth + 2 * cardGap, cardGap);
     final foundations = List.generate(
       4,
-          (i) => Foundation()
+      (i) => Foundation()
         ..size = cardSize
         ..position =
-        Vector2((i + 3) * (cardWidth + cardGap) + cardGap, cardGap),
+            Vector2((i + 3) * (cardWidth + cardGap) + cardGap, cardGap),
     );
     final piles = List.generate(
       7,
-          (i) => Pile()
+      (i) => Pile()
         ..size = cardSize
         ..position = Vector2(
           cardGap + i * (cardWidth + cardGap),
@@ -38,5 +42,22 @@ class KlondikeGame extends FlameGame {
     world.add(waste);
     world.addAll(foundations);
     world.addAll(piles);
+
+    camera.viewfinder.visibleGameSize =
+        Vector2(cardWidth * 7 + cardGap * 8, 4 * cardHeight + 3 * cardGap);
+    camera.viewfinder.position = Vector2(cardWidth * 3.5 + cardGap * 4, 0);
+    camera.viewfinder.anchor = Anchor.topCenter;
+
+    final random = Random();
+    for (var i = 0; i < 7; i++) {
+      for (var j = 0; j < 4; j++) {
+        final card = Card(random.nextInt(13) + 1, random.nextInt(4))
+          ..position = Vector2(100 + i * 1150, 100 + j * 1500)
+          ..addToParent(world);
+        if (random.nextDouble() < 0.9) { // flip face up with 90% probability
+          card.flip();
+        }
+      }
+    }
   }
 }
