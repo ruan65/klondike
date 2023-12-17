@@ -55,7 +55,4 @@ class StockPile extends PositionComponent with TapCallbacks {
     ..style = PaintingStyle.stroke
     ..strokeWidth = 100
     ..color = const Color(0x883F5B5D);
-
-  @override
-  bool get debugMode => true;
 }

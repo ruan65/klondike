@@ -1,12 +1,12 @@
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
-import 'package:syzygy/components/tableauPile.dart';
+import 'package:syzygy/components/foundation_pile.dart';
+import 'package:syzygy/components/tableau_pile.dart';
 import 'package:syzygy/utils/sizes.dart';
 
 import 'components/card.dart';
-import 'components/foundation.dart';
-import 'components/stockPile.dart';
+import 'components/stock_pile.dart';
 import 'components/wastePile.dart';
 
 class KlondikeGame extends FlameGame {
@@ -21,10 +21,10 @@ class KlondikeGame extends FlameGame {
       ..position = Vector2(cardWidth + 2 * cardGap, cardGap);
     final foundations = List.generate(
       4,
-      (i) => Foundation()
+      (suit) => FoundationPile(suit)
         ..size = cardSize
         ..position =
-            Vector2((i + 3) * (cardWidth + cardGap) + cardGap, cardGap),
+            Vector2((suit + 3) * (cardWidth + cardGap) + cardGap, cardGap),
     );
     final tableauPiles = List.generate(
       7,
@@ -47,13 +47,12 @@ class KlondikeGame extends FlameGame {
     camera.viewfinder.anchor = Anchor.topCenter;
 
     final cards = [
-      for (var rank = 1; rank <= 3; rank++)
+      for (var rank = 1; rank <= 13; rank++)
         for (var suit = 0; suit <= 3; suit++) Card(rank, suit)
     ];
-
-    print(cards);
-
-    // cards.shuffle();
+    cards.shuffle();
+    // print(cards.length);
+    // print(cards);
 
     world.addAll(cards);
     cards.forEach(stock.acquireCard);

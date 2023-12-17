@@ -33,7 +33,4 @@ class WastePile extends PositionComponent {
     _cards.clear();
     return cards;
   }
-
-  @override
-  bool get debugMode => true;
 }
