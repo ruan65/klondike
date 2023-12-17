@@ -51,10 +51,17 @@ class KlondikeGame extends FlameGame {
         for (var suit = 0; suit <= 3; suit++) Card(rank, suit)
     ];
     cards.shuffle();
-    // print(cards.length);
-    // print(cards);
-
     world.addAll(cards);
-    cards.forEach(stock.acquireCard);
+
+    int cardToDeal = cards.length - 1;
+    for (var i = 0; i < 7; i++) {
+      for (var j = i; j < 7; j++) {
+        tableauPiles[j].acquireCard(cards[cardToDeal--]);
+      }
+      tableauPiles[i].flipTopCard();
+    }
+    for (int n = 0; n <= cardToDeal; n++) {
+      stock.acquireCard(cards[n]);
+    }
   }
 }

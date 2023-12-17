@@ -2,12 +2,14 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
+import 'package:syzygy/components/pile.dart';
 import 'package:syzygy/models/rank.dart';
 import 'package:syzygy/models/suit.dart';
 import 'package:syzygy/utils.dart';
 import 'package:syzygy/utils/sizes.dart';
 
-class Card extends PositionComponent {
+class Card extends PositionComponent with DragCallbacks {
   Card(int intRank, int intSuit)
       : rank = Rank.fromInt(intRank),
         suit = Suit.fromInt(intSuit),
@@ -17,6 +19,7 @@ class Card extends PositionComponent {
   final Rank rank;
   final Suit suit;
   bool _faceUp;
+  Pile? pile;
 
   bool get isFaceUp => _faceUp;
 
@@ -169,13 +172,13 @@ class Card extends PositionComponent {
         _drawSprite(canvas, suitSprite, 0.7, 0.4, rotate: true);
         break;
       case 11:
-        _drawSprite(canvas, suit.isRed? redJack : blackJack, 0.5, 0.5);
+        _drawSprite(canvas, suit.isRed ? redJack : blackJack, 0.5, 0.5);
         break;
       case 12:
-        _drawSprite(canvas, suit.isRed? redQueen : blackQueen, 0.5, 0.5);
+        _drawSprite(canvas, suit.isRed ? redQueen : blackQueen, 0.5, 0.5);
         break;
       case 13:
-        _drawSprite(canvas, suit.isRed? redKing : blackKing, 0.5, 0.5);
+        _drawSprite(canvas, suit.isRed ? redKing : blackKing, 0.5, 0.5);
         break;
     }
   }
@@ -188,13 +191,13 @@ class Card extends PositionComponent {
   }
 
   void _drawSprite(
-      Canvas canvas,
-      Sprite sprite,
-      double relativeX,
-      double relativeY, {
-        double scale = 1,
-        bool rotate = false,
-      }) {
+    Canvas canvas,
+    Sprite sprite,
+    double relativeX,
+    double relativeY, {
+    double scale = 1,
+    bool rotate = false,
+  }) {
     if (rotate) {
       canvas.save();
       canvas.translate(size.x / 2, size.y / 2);
@@ -210,6 +213,43 @@ class Card extends PositionComponent {
     if (rotate) {
       canvas.restore();
     }
+  }
+
+  @override
+  void onDragStart(DragStartEvent event) {
+    if (pile?.canMoveCard(this) ?? false) {
+      super.onDragStart(event);
+      priority = 1000;
+    }
+  }
+
+  @override
+  void onDragUpdate(DragUpdateEvent event) {
+    if (!isDragged) {
+      return;
+    }
+    position += event.delta;
+  }
+
+  @override
+  void onDragEnd(DragEndEvent event) {
+    if (!isDragged) {
+      return;
+    }
+    super.onDragEnd(event);
+    final dropPiles = parent!
+        .componentsAtPoint(position + size / 2)
+        .whereType<Pile>()
+        .toList();
+
+    if (dropPiles.isNotEmpty) {
+      if (dropPiles.first.canAcceptCard(this)) {
+        pile!.removeCard(this);
+        dropPiles.first.acquireCard(this);
+        return;
+      }
+    }
+    pile!.returnCard(this);
   }
 
   @override
