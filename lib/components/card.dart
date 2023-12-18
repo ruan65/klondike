@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:syzygy/components/pile.dart';
+import 'package:syzygy/components/tableau_pile.dart';
 import 'package:syzygy/models/rank.dart';
 import 'package:syzygy/models/suit.dart';
 import 'package:syzygy/utils.dart';
@@ -20,6 +21,7 @@ class Card extends PositionComponent with DragCallbacks {
   final Suit suit;
   bool _faceUp;
   Pile? pile;
+  final List<Card> attachedCards = [];
 
   bool get isFaceUp => _faceUp;
 
@@ -220,6 +222,14 @@ class Card extends PositionComponent with DragCallbacks {
     if (pile?.canMoveCard(this) ?? false) {
       super.onDragStart(event);
       priority = 1000;
+      if (pile is TableauPile) {
+        attachedCards.clear();
+        final extraCards = (pile! as TableauPile).cardsOnTop(this);
+        for (final card in extraCards) {
+          card.priority = attachedCards.length + 1001;
+          attachedCards.add(card);
+        }
+      }
     }
   }
 
@@ -228,7 +238,9 @@ class Card extends PositionComponent with DragCallbacks {
     if (!isDragged) {
       return;
     }
-    position += event.delta;
+    final delta = event.localDelta;
+    position.add(delta);
+    attachedCards.forEach((card) => card.position.add(delta));
   }
 
   @override
@@ -246,10 +258,18 @@ class Card extends PositionComponent with DragCallbacks {
       if (dropPiles.first.canAcceptCard(this)) {
         pile!.removeCard(this);
         dropPiles.first.acquireCard(this);
+        if (attachedCards.isNotEmpty) {
+          attachedCards.forEach((card) => dropPiles.first.acquireCard(card));
+          attachedCards.clear();
+        }
         return;
       }
     }
     pile!.returnCard(this);
+    if (attachedCards.isNotEmpty) {
+      attachedCards.forEach((card) => pile!.returnCard(card));
+      attachedCards.clear();
+    }
   }
 
   @override

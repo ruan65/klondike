@@ -36,7 +36,7 @@ class TableauPile extends PositionComponent implements Pile {
   }
 
   @override
-  bool canMoveCard(Card card) => _cards.isNotEmpty && card == _cards.last;
+  bool canMoveCard(Card card) => card.isFaceUp;
 
   @override
   bool canAcceptCard(Card card) {
@@ -65,6 +65,12 @@ class TableauPile extends PositionComponent implements Pile {
     final index = _cards.indexOf(card);
     card.priority = index;
     _layOutCards();
+  }
+
+  List<Card> cardsOnTop(Card card) {
+    assert(card.isFaceUp && _cards.contains(card));
+    final index = _cards.indexOf(card);
+    return _cards.getRange(index + 1, _cards.length).toList();
   }
 
   void _layOutCards() {
