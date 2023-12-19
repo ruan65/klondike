@@ -1,9 +1,12 @@
 import 'package:flame/components.dart';
 import 'package:syzygy/components/card.dart';
 import 'package:syzygy/components/pile.dart';
+import 'package:syzygy/klondike_game.dart';
 import 'package:syzygy/utils/sizes.dart';
 
-class WastePile extends PositionComponent implements Pile {
+class WastePile extends PositionComponent
+    with HasGameReference<KlondikeGame>
+    implements Pile {
   WastePile({super.position}) : super(size: cardSize);
 
   final List<Card> _cards = [];
@@ -19,6 +22,9 @@ class WastePile extends PositionComponent implements Pile {
   }
 
   void _fanOutTopCards() {
+    if (game.klondikeDraw == 1) {   // No fan-out in Klondike Draw 1.
+      return;
+    }
     final n = _cards.length;
 
     for (var i = 0; i < n; i++) {
@@ -26,7 +32,7 @@ class WastePile extends PositionComponent implements Pile {
     }
     if (n == 2) {
       _cards[1].position.add(fanOffset);
-    } else if (n >= 3) {
+    } else if (n >= game.klondikeDraw) {
       _cards[n - 2].position.add(fanOffset);
       _cards[n - 1].position.addScaled(fanOffset, 2);
     }

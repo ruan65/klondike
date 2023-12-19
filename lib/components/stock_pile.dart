@@ -5,9 +5,12 @@ import 'package:flame/events.dart';
 import 'package:syzygy/components/card.dart';
 import 'package:syzygy/components/pile.dart';
 import 'package:syzygy/components/wastePile.dart';
+import 'package:syzygy/klondike_game.dart';
 import 'package:syzygy/utils/sizes.dart';
 
-class StockPile extends PositionComponent with TapCallbacks implements Pile {
+class StockPile extends PositionComponent
+    with TapCallbacks, HasGameReference<KlondikeGame>
+    implements Pile {
   StockPile({super.position}) : super(size: cardSize);
   final List<Card> _cards = [];
 
@@ -30,7 +33,7 @@ class StockPile extends PositionComponent with TapCallbacks implements Pile {
         acquireCard(card);
       });
     } else {
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < game.klondikeDraw; i++) {
         if (_cards.isNotEmpty) {
           final card = _cards.removeLast();
           card.flip();
