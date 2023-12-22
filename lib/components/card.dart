@@ -2,7 +2,9 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
+import 'package:flutter/animation.dart';
 import 'package:syzygy/components/pile.dart';
 import 'package:syzygy/components/tableau_pile.dart';
 import 'package:syzygy/models/rank.dart';
@@ -21,6 +23,13 @@ class Card extends PositionComponent with DragCallbacks {
   final Suit suit;
   bool _faceUp;
   Pile? pile;
+
+  bool _isDragging = false;
+  bool _isAnimatedFlip = false;
+  bool _isFaceUpView = false;
+
+  Vector2 _whereCardStarted = Vector2(0, 0);
+
   final List<Card> attachedCards = [];
 
   bool get isFaceUp => _faceUp;
@@ -76,7 +85,7 @@ class Card extends PositionComponent with DragCallbacks {
 
   @override
   void render(Canvas canvas) {
-    if (_faceUp) {
+    if (_isFaceUpView) {
       _renderFront(canvas);
     } else {
       _renderBack(canvas);
@@ -221,7 +230,10 @@ class Card extends PositionComponent with DragCallbacks {
   void onDragStart(DragStartEvent event) {
     if (pile?.canMoveCard(this) ?? false) {
       super.onDragStart(event);
+      _isDragging = true;
       priority = 1000;
+      // Copy each co-ord, else _whereCardStarted changes as the position does.
+      _whereCardStarted = Vector2(position.x, position.y);
       if (pile is TableauPile) {
         attachedCards.clear();
         final extraCards = (pile! as TableauPile).cardsOnTop(this);
@@ -265,11 +277,83 @@ class Card extends PositionComponent with DragCallbacks {
         return;
       }
     }
-    pile!.returnCard(this);
+    // Invalid drop (middle of nowhere, invalid pile or invalid card for pile).
+    doMove(
+      _whereCardStarted,
+      onComplete: () {
+        pile!.returnCard(this);
+      },
+    );
     if (attachedCards.isNotEmpty) {
-      attachedCards.forEach((card) => pile!.returnCard(card));
+      attachedCards.forEach((card) {
+        final offset = card.position - position;
+        card.doMove(
+          _whereCardStarted + offset,
+          onComplete: () {
+            pile!.returnCard(card);
+          },
+        );
+      });
       attachedCards.clear();
     }
+  }
+
+  void doMove(
+    Vector2 to, {
+    double speed = 10.0,
+    double start = 0.0,
+    Curve curve = Curves.easeOutQuad,
+    VoidCallback? onComplete,
+  }) {
+    assert(speed > 0.0, 'Speed must be > 0 widths per second');
+    final dt = (to - position).length / (speed * size.x);
+    assert(dt > 0.0, 'Distance to move must be > 0');
+    priority = 1000;
+    add(
+      MoveToEffect(
+        to,
+        EffectController(duration: dt, startDelay: start, curve: curve),
+        onComplete: () {
+          onComplete?.call();
+        },
+      ),
+    );
+  }
+
+  void turnFaceUp({
+    double time = 0.3,
+    double start = 0.0,
+    VoidCallback? onComplete,
+  }) {
+    assert(!_isFaceUpView, 'Card must be face-down before turning face-up.');
+    assert(time > 0.0, 'Time to turn card over must be > 0');
+    _isAnimatedFlip = true;
+    anchor = Anchor.topCenter;
+    position += Vector2(width / 2, 0);
+    priority = 1000;
+    add(
+      ScaleEffect.to(
+        Vector2(scale.x / 100, scale.y),
+        EffectController(
+          startDelay: start,
+          curve: Curves.easeOutSine,
+          duration: time / 2,
+          onMax: () {
+            _isFaceUpView = true;
+          },
+          reverseDuration: time / 2,
+          onMin: () {
+            _isAnimatedFlip = false;
+            _faceUp = true;
+            anchor = Anchor.topLeft;
+            position -= Vector2(width / 2, 0);
+          },
+        ),
+        onComplete: () {
+          onComplete?.call();
+        },
+      ),
+    );
   }
 
   @override
