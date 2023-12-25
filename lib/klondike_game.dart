@@ -10,8 +10,8 @@ import 'components/stock_pile.dart';
 import 'components/wastePile.dart';
 
 class KlondikeGame extends FlameGame {
-  // final int klondikeDraw = 3;
-  final int klondikeDraw = 1;
+  final int klondikeDraw = 3;
+  // final int klondikeDraw = 1;
   @override
   Future<void> onLoad() async {
     await Flame.images.load('klondike-sprites.png');
