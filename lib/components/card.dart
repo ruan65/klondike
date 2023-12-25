@@ -36,7 +36,16 @@ class Card extends PositionComponent with DragCallbacks {
 
   bool get isFaceDown => !_faceUp;
 
-  void flip() => _faceUp = !_faceUp;
+  void flip() {
+    if (_isAnimatedFlip) {
+      // Let the animation determine the FaceUp/FaceDown state.
+      _faceUp = _isFaceUpView;
+    } else {
+      // No animation: flip and render the card immediately.
+      _faceUp = !_faceUp;
+      _isFaceUpView = _faceUp;
+    }
+  }
 
   static final Paint backBackgroundPaint = Paint()
     ..color = const Color(0xff380c02);
